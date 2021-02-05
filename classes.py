@@ -1,4 +1,28 @@
 from math import ceil
+import os
+import csv
+import pandas
+
+columnas = ['Dia','Hora','Nombre1','Nombres2','Apellido1','Apellido2','Genero','CURP','tel_movil','tel_casa','password','prestamos']
+default_path = "prestamo.csv"
+
+def empty_file(path:str):
+    if os.path.getsize(path) == 0:
+        return True
+    else:
+        return False
+
+def search(path:str,name:str,apellido:str):
+    with open(path,'r') as f:
+        csvread = csv.reader(f)
+        for row in csvread:
+            if row[2].lower() == name.lower() and row[4].lower() == apellido.lower():
+                return row
+
+def checkPassword(rowObj):
+    password = int(rowObj[10])
+    Upass = int(input("Constraseña => "))
+    return password == Upass
 
 class tiempo:
     minutos = 0
@@ -6,7 +30,21 @@ class tiempo:
     dias = 0
     def __init__(self,*arg):
         if len(arg) == 0:
-            htiempo = input("Ingrese el tiempo (MM:HH) => ").split(':')
+            htiempo = input("Ingrese el tiempo (HH:MM) => ").split(':')
+            self.horas = htiempo[0]
+            self.minutos = htiempo[1]
+        elif len(arg) == 1 and isinstance(arg[0],str):
+            htiempo = arg[0].split(':')
+            self.horas = htiempo[0]
+            self.minutos = htiempo[1]
+        elif len(arg) == 2 and isinstance(arg[0],int) and isinstance(arg[0],int):
+            self.horas = arg[0]
+            self.minutos = arg[1]
+        self._actualizar()
+    
+    def recargarTiempo(self,*arg):
+        if len(arg) == 0:
+            htiempo = input("Ingrese el tiempo (HH:MM) => ").split(':')
             self.horas = htiempo[0]
             self.minutos = htiempo[1]
         elif len(arg) == 1 and isinstance(arg[0],str):
@@ -59,6 +97,23 @@ class fecha:
     mes = None
     anio = None
     def __init__(self,*arg):
+        if len(arg) == 0:
+            ffecha = input("Ingresa la fecha (DD-MM-AAAA) => ").split('-')
+            self.dia = int(ffecha[0])
+            self.mes = int(ffecha[1])
+            self.anio = int(ffecha[2])
+        elif len(arg) == 1 and isinstance(arg[0],str):
+            ffecha = arg[0].split("-")
+            self.dia = int(ffecha[0])
+            self.mes = int(ffecha[1])
+            self.anio = int(ffecha[2])
+        elif len(arg) == 3 and isinstance(arg[0],int) and isinstance(arg[1],int) and isinstance(arg[2],int):
+            self.dia = arg[0]
+            self.mes = arg[1]
+            self.anio = arg[2]
+        self._actualizar()
+
+    def recargarFecha(self,*arg):
         if len(arg) == 0:
             ffecha = input("Ingresa la fecha (DD-MM-AAAA) => ").split('-')
             self.dia = int(ffecha[0])
@@ -134,8 +189,8 @@ class persona:
             self.apellidos = input("Apellidos => ").split()
             self.genero = input("Genero => ")
             self.curp = input("CURP => ")
-            self.tel_movil = int(input("Telefono movil => "))
-            self.tel_casa = int(input("Telefono de casa => "))
+            self.tel_movil = input("Telefono movil => ")
+            self.tel_casa = input("Telefono de casa => ")
             self.password = int(input("Password (Solo numeros) => "))
         # Ingreso solo necesario
         elif len(arg) == 1 and arg[0] == False:
@@ -148,8 +203,8 @@ class persona:
             self.apellidos = arg[1]
             self.genero = arg[2]
             self.curp = arg[3]
-            self.tel_movil = int(arg[4])
-            self.tel_casa = int(arg[5])
+            self.tel_movil = arg[4]
+            self.tel_casa = arg[5]
             self.password = int(arg[6])
     def imprimir_usuario(self):
         print("Informacion del usuario".center(75,'-'))
@@ -167,6 +222,7 @@ class persona:
         print(str(self.tel_casa).center(50))
         
 class prestamo(fecha,tiempo,persona):
+    guardar = False
     _interes = 0.15
     num_prestamo = 0
     dinero_prestado = 0.0
@@ -195,15 +251,42 @@ class prestamo(fecha,tiempo,persona):
                 print("".center(75,'-'))
                 opt = True if opt == 1 else False
                 persona.__init__(self,opt)
-        elif len(arg) == 9:
+        elif len(arg) == 10:
             fecha.__init__(self,arg[0])
             tiempo.__init__(self,arg[1])
             persona.__init__(self,arg[2],arg[3],arg[4],arg[5],arg[6],arg[7],arg[8])
+            self.num_prestamo = int(arg[9])
+
+    def __del__(self):
+        if self.guardar:
+            ffecha = str(self.dia) + "-" + str(self.mes) + "-" + str(self.anio)
+            ttiempo = str(self.horas) + ":" + str(self.minutos)
+
+            if len(self.nombre) == 2:
+                nnombre = [self.nombre[0],self.nombre[1]]
+            else:
+                nnombre = [self.nombre[0],""]
+            
+            if len(self.apellidos) == 2:
+                aapellido = [self.apellidos[0],self.apellidos[1]]
+            else:
+                aapellido = [self.apellidos[0],""]
+
+            if search(default_path,self.nombre[0],self.apellidos[0]) == None:
+                with open(default_path,'a') as f:
+                    csvWrite = csv.writer(f)
+                    csvWrite.writerow([ffecha,ttiempo,nnombre[0],nnombre[1],aapellido[0],aapellido[1],self.genero,self.curp,self.tel_movil,self.tel_movil,self.password,self.num_prestamo])
+            else:
+                df = pandas.read_csv(default_path)
+                df.loc[df["CURP"]==self.curp, "prestamos"] = self.num_prestamo
+                df.loc[df["CURP"]==self.curp, "Dia"] = ffecha
+                df.loc[df["CURP"]==self.curp, "Hora"] = ttiempo
+                df.to_csv(default_path,index=False)
 
     def crearPrestamo(self,*arg):
+        self.num_prestamo += 1
         self.dinero_prestado = float(input("Ingrese el dinero que solicita => "))
         self.dinero_pagar = ceil(self.dinero_prestado + (self.dinero_prestado * self._interes))
-        self.crearPlazos()
 
     def verificarFecha(self) -> bool:
         return self.dia < 21
@@ -225,6 +308,7 @@ class prestamo(fecha,tiempo,persona):
         self.pagos_plazo = round(self.pagos_plazo,2)
     
     def imprimirPrestamo(self):
+        print("DATOS DEL ULTIMO PRESTAMO".center(75,'-'))
         self.imprimir_usuario()
         print("Hora de prestamo".center(75,'-'))
         print(("Fecha:" + str(self.dia) + "-" + str(self.mes) + "-" + str(self.anio)).center(38),end="")
