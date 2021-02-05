@@ -3,8 +3,7 @@ from classes import *
 
 def main():
     x = prestamo()
-    x.imprimir_fecha()
-    x.crearPlazos(6)
+    x.crearPlazos()
 
 if __name__ == "__main__":
     main()

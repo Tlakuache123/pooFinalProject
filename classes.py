@@ -1,12 +1,68 @@
+class tiempo:
+    minutos = 0
+    horas = 0
+    dias = 0
+    dias = 0
+    def __init__(self,*arg):
+        if len(arg) == 0:
+            htiempo = input("Ingrese el tiempo (MM:HH) => ").split(':')
+            self.horas = htiempo[0]
+            self.minutos = htiempo[1]
+        elif len(arg) == 1 and isinstance(arg[0],str):
+            htiempo = arg[0].split(':')
+            self.horas = htiempo[0]
+            self.minutos = htiempo[1]
+        elif len(arg) == 2 and isinstance(arg[0],int) and isinstance(arg[0],int):
+            self.horas = arg[0]
+            self.minutos = arg[1]
+        self._actualizar()
+
+    def enviarDias(self):
+        tdias = self.dias
+        self.dias = 0
+        return tdias
+
+    def _actualizar(self):
+        if self.minutos > 60:
+            self.minutos -= 60
+            self.horas += 1
+            self._actualizar()
+        if self.horas == 24 and self.minutos > 0:
+            self.horas -= 24
+            self.dias += 1
+            self._actualizar()
+        elif self.horas > 24:
+            self.horas -= 24
+            self.dias += 1
+            self._actualizar()
+
+    def sumaTiempo(self,*arg):
+        tTiempo = tiempo(self.horas,self.minutos)
+        if len(arg) == 1 and isinstance(arg[0],int):
+            tTiempo.minutos += arg[0]
+        elif len(arg) == 2  and isinstance(arg[0],int) and isinstance(arg[1],int):
+            tTiempo.horas += arg[0]
+            tTiempo.minutos += arg[1]
+        elif len(arg) == 1 and isinstance(arg[0],str):
+            rtTIempo = arg[0].split(":")
+            tTiempo.horas += int(rtTIempo[0])
+            tTiempo.minutos += int(rtTIempo[1])
+        tTiempo._actualizar()
+        return tTiempo
+
+    def imprimir_tiempo(self):
+        print(str(self.horas)+":"+str(self.minutos))
+
 class fecha:
     dia = None
     mes = None
     anio = None
     def __init__(self,*arg):
         if len(arg) == 0:
-            self.dia = int(input("Dia => "))
-            self.mes = int(input("Mes => "))
-            self.anio = int(input("Anio => "))
+            ffecha = input("Ingresa la fecha (DD-MM-AAAA) => ").split('-')
+            self.dia = int(ffecha[0])
+            self.mes = int(ffecha[1])
+            self.anio = int(ffecha[2])
         elif len(arg) == 1 and isinstance(arg[0],str):
             ffecha = arg[0].split("-")
             self.dia = int(ffecha[0])
@@ -47,7 +103,7 @@ class fecha:
             self.dia = 1
             self._actualizar()
 
-    def suma(self,*arg):
+    def sumaFecha(self,*arg):
         auxFecha = fecha(self.dia,self.mes,self.anio)
         if len(arg) == 1:
             auxFecha.dia += arg[0]
@@ -60,24 +116,6 @@ class fecha:
             auxFecha.anio += arg[2]
         auxFecha._actualizar()
         return auxFecha
-    
-    
-
-class prestamo(fecha):
-    plazos = 0
-    def __init__(self):
-        print("Fecha del prestamos")
-        fecha.__init__(self)
-
-    def verificarFecha(self) -> bool:
-        return self.dia > 21
-    
-    def crearPlazos(self,tplazos):
-        print("Plazos de pago")
-        ffecha = fecha(self.dia,self.mes,self.anio)
-        for x in range(tplazos):
-            ffecha = ffecha.suma(30)
-            ffecha.imprimir_fecha()
 
 
 class persona:
@@ -88,22 +126,22 @@ class persona:
     tel_movil = None
     tel_casa = None
     __password = None
-    def __init__(self,*arg):
-        if len(arg) == 0:
+    def __init__(self,arg = None):
+        # Ingreso completo
+        if arg == True:
             self.nombre = input("Nombre(s) => ").split()
             self.apellidos = input("Apellidos => ").split()
             self.genero = input("Genero => ")
             self.curp = input("CURP => ")
-            # Ingreso de datos int
             self.tel_movil = int(input("Telefono movil => "))
             self.tel_casa = int(input("Telefono de casa => "))
             self.password = int(input("Password (Solo numeros) => "))
-    #@dispatch((str,list,tuple),(list,tuple),str,int)
-        elif len(arg) == 4:
-            self.nombre = arg[0]
-            self.apellidos = arg[1]
-            self.curp = arg[2]
-            self.password = arg[3]
+        # Ingreso solo necesario
+        elif arg == False or arg == None:
+            self.nombre = input("Nombre(s) =>").split()
+            self.apellidos = input("Apellitos => ").split()
+            self.curp = input("CURP => ")
+            self.password = int(input("Password (Solo numeros) => "))
     def imprimir_usuario(self):
         print("Informacion del usuario".center(75,'-'))
         print("Nombre(s):".ljust(25),end="")
@@ -119,3 +157,64 @@ class persona:
         print("Telf-casa:".ljust(25),end="")
         print(str(self.tel_casa).center(50))
         print("".center(75,'-'))
+        
+class prestamo(fecha,tiempo,persona):
+    dinero_prestado = float
+    solicitud = int
+    plazos = []
+    def __init__(self,*arg):
+        if len(arg) == 0:
+            self.solicitud = input("Numero de solicitud => ")
+            print("Fecha del prestamo")
+            fecha.__init__(self)
+            tiempo.__init__(self)
+        elif len(arg) == 1 and isinstance(arg[0],int):
+            self.solicitud = arg[0]
+            print("Fecha del prestamo")
+            fecha.__init__(self)
+            tiempo.__init__(self)
+        elif len(arg) == 3 and isinstance(arg[0],int) and isinstance(arg[1],str) and isinstance(arg[2],str):
+            self.solicitud = arg[0]
+            fecha.__init__(self,arg[1])
+            tiempo.__init__(self,arg[2])
+        if self.verificarFecha():
+            print("".center(75,'-'))
+            print("Desea ingresar datos completos o los necesarios del usuario")
+            opt = int(input("1) Completos -- 2) Incompletos => "))
+            print("".center(75,'-'))
+            opt = True if opt == 1 else False
+            persona.__init__(self,opt)
+        else:
+            print("Solo hay prestamos los primeros 20 dias del mes")
+
+    def crearPrestamo(self,*arg):
+        if len(arg) == 0:
+            self.dinero_prestado = float(input("Ingrese el dinero que solicita => "))
+        return self.dinero_prestado
+
+    def verificarFecha(self) -> bool:
+        return self.dia < 21
+    
+    def crearPlazos(self,*arg):
+        tplazos = 0
+        if len(arg) == 0:
+            tplazos = int(input("Ingrese el numero de plazos => "))
+        elif len(arg) == 1 and isinstance(arg[0],int):
+            tplazos = arg[0]
+        print("Plazos de pago".center(75,'-'))
+        ffecha = fecha(self.dia,self.mes,self.anio)
+        for x in range(tplazos):
+            ffecha = ffecha.sumaFecha(30)
+            self.plazos.append(ffecha)
+        for x in self.plazos:
+            x.imprimir_fecha()
+    
+class banco:
+    __montoMaximo = 10000
+    def verificarMonto(self,arg):
+        return self.__montoMaximo >= arg
+    def autorizarMonto(self,fFecha,tTiempo):
+        tTiempo = tTiempo.sumaTiempo(1,0)
+        fFecha = fFecha.sumaFecha(tTiempo.enviarDias())
+        fFecha.imprimir_fecha()
+        tTiempo.imprimir_tiempo()
