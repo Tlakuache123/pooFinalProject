@@ -1,7 +1,8 @@
+from math import ceil
+
 class tiempo:
     minutos = 0
     horas = 0
-    dias = 0
     dias = 0
     def __init__(self,*arg):
         if len(arg) == 0:
@@ -126,9 +127,9 @@ class persona:
     tel_movil = None
     tel_casa = None
     __password = None
-    def __init__(self,arg = None):
+    def __init__(self,*arg):
         # Ingreso completo
-        if arg == True:
+        if len(arg) == 1 and arg[0] == True:
             self.nombre = input("Nombre(s) => ").split()
             self.apellidos = input("Apellidos => ").split()
             self.genero = input("Genero => ")
@@ -137,11 +138,19 @@ class persona:
             self.tel_casa = int(input("Telefono de casa => "))
             self.password = int(input("Password (Solo numeros) => "))
         # Ingreso solo necesario
-        elif arg == False or arg == None:
+        elif len(arg) == 1 and arg[0] == False:
             self.nombre = input("Nombre(s) =>").split()
             self.apellidos = input("Apellitos => ").split()
             self.curp = input("CURP => ")
             self.password = int(input("Password (Solo numeros) => "))
+        elif len(arg) == 7:
+            self.nombre = arg[0]
+            self.apellidos = arg[1]
+            self.genero = arg[2]
+            self.curp = arg[3]
+            self.tel_movil = int(arg[4])
+            self.tel_casa = int(arg[5])
+            self.password = int(arg[6])
     def imprimir_usuario(self):
         print("Informacion del usuario".center(75,'-'))
         print("Nombre(s):".ljust(25),end="")
@@ -156,41 +165,45 @@ class persona:
         print(str(self.tel_movil).center(50))
         print("Telf-casa:".ljust(25),end="")
         print(str(self.tel_casa).center(50))
-        print("".center(75,'-'))
         
 class prestamo(fecha,tiempo,persona):
-    dinero_prestado = float
-    solicitud = int
+    _interes = 0.15
+    num_prestamo = 0
+    dinero_prestado = 0.0
+    dinero_pagar = 0.0
+    pagos_plazo = 0.0
+    solicitud = 0
     plazos = []
     def __init__(self,*arg):
         if len(arg) == 0:
-            self.solicitud = input("Numero de solicitud => ")
-            print("Fecha del prestamo")
             fecha.__init__(self)
             tiempo.__init__(self)
-        elif len(arg) == 1 and isinstance(arg[0],int):
-            self.solicitud = arg[0]
-            print("Fecha del prestamo")
-            fecha.__init__(self)
-            tiempo.__init__(self)
-        elif len(arg) == 3 and isinstance(arg[0],int) and isinstance(arg[1],str) and isinstance(arg[2],str):
-            self.solicitud = arg[0]
-            fecha.__init__(self,arg[1])
-            tiempo.__init__(self,arg[2])
-        if self.verificarFecha():
-            print("".center(75,'-'))
-            print("Desea ingresar datos completos o los necesarios del usuario")
-            opt = int(input("1) Completos -- 2) Incompletos => "))
-            print("".center(75,'-'))
-            opt = True if opt == 1 else False
-            persona.__init__(self,opt)
-        else:
-            print("Solo hay prestamos los primeros 20 dias del mes")
+            if self.verificarFecha():
+                print("".center(75,'-'))
+                print("Desea ingresar datos completos o los necesarios del usuario")
+                opt = int(input("1) Completos -- 2) Incompletos => "))
+                print("".center(75,'-'))
+                opt = True if opt == 1 else False
+                persona.__init__(self,opt)
+        elif len(arg) == 2 and isinstance(arg[0],str) and isinstance(arg[1],str):
+            fecha.__init__(self,arg[0])
+            tiempo.__init__(self,arg[1])
+            if self.verificarFecha():
+                print("".center(75,'-'))
+                print("Desea ingresar datos completos o los necesarios del usuario")
+                opt = int(input("1) Completos -- 2) Incompletos => "))
+                print("".center(75,'-'))
+                opt = True if opt == 1 else False
+                persona.__init__(self,opt)
+        elif len(arg) == 9:
+            fecha.__init__(self,arg[0])
+            tiempo.__init__(self,arg[1])
+            persona.__init__(self,arg[2],arg[3],arg[4],arg[5],arg[6],arg[7],arg[8])
 
     def crearPrestamo(self,*arg):
-        if len(arg) == 0:
-            self.dinero_prestado = float(input("Ingrese el dinero que solicita => "))
-        return self.dinero_prestado
+        self.dinero_prestado = float(input("Ingrese el dinero que solicita => "))
+        self.dinero_pagar = ceil(self.dinero_prestado + (self.dinero_prestado * self._interes))
+        self.crearPlazos()
 
     def verificarFecha(self) -> bool:
         return self.dia < 21
@@ -198,16 +211,34 @@ class prestamo(fecha,tiempo,persona):
     def crearPlazos(self,*arg):
         tplazos = 0
         if len(arg) == 0:
-            tplazos = int(input("Ingrese el numero de plazos => "))
+            tplazos = int(input("Ingrese el numero de plazos (Maximo 6) => "))
         elif len(arg) == 1 and isinstance(arg[0],int):
             tplazos = arg[0]
-        print("Plazos de pago".center(75,'-'))
+        while(tplazos > 6 or tplazos < 0):
+            print("*ERROR* Ingrese un numero entre 1 y 6 *ERROR*")
+            tplazos = int(input("Ingrese el numero de plazos (Maximo 6) => "))
         ffecha = fecha(self.dia,self.mes,self.anio)
         for x in range(tplazos):
             ffecha = ffecha.sumaFecha(30)
             self.plazos.append(ffecha)
+        self.pagos_plazo = ceil(self.dinero_pagar/tplazos)
+        self.pagos_plazo = round(self.pagos_plazo,2)
+    
+    def imprimirPrestamo(self):
+        self.imprimir_usuario()
+        print("Hora de prestamo".center(75,'-'))
+        print(("Fecha:" + str(self.dia) + "-" + str(self.mes) + "-" + str(self.anio)).center(38),end="")
+        print(("Hora: " +str(self.horas) + ":" + str(self.minutos)).center(37))
+        print("Informacion del prestamo".center(75,'-'))
+        print("Num. Prestamo: " + str(self.num_prestamo).center(50))
+        print("Prestamo: " + ("$" + str(self.dinero_prestado)).center(50))
+        print("Pago total: " + ("$" + str(self.dinero_pagar)).center(50))
+        print("Plazos de pago".center(75,'-'))
+        i = 1
         for x in self.plazos:
-            x.imprimir_fecha()
+            print((str(i) + "- Fecha: " + str(x.dia) + "-" + str(x.mes) + "-" + str(x.anio)).ljust(37),end="")
+            print(("Pago: $" + str(self.pagos_plazo)).center(38))
+            i += 1
     
 class banco:
     __montoMaximo = 10000
